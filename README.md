@@ -1,9 +1,9 @@
 # Q-Forensics-Quantum-Deepfake-Detection
 Unmasking synthetic media through 4-qubit entanglement and 16-D Hilbert Space auditing.
-** Overview:**
+#Overview:
  Q-Forensics is a lightweight hybrid quantum-classical framework designed to address the growing threat of high-fidelity synthetic media. While classical deep learning models require millions of parameters to detect advanced generative artifacts (from models like Flux and Stable Diffusion 3.5), Q-Forensics leverages Quantum Machine Learning to achieve high-precision detection with a fraction of the computational overhead.
 
-** Key Features**
+ #Key Features
 ** Quantum Advantage:** Utilizes a 4-Qubit Variational Quantum Circuit (VQC) to achieve 97.8% accuracy.
 **Hilbert Space Mapping:** Features are mapped into a 16-dimensional ($2^4$) Hilbert Space, allowing for superior separation of real vs. fake data points.
 ** Dual-Stream Fusion:** Processes both Spatial Noise Residuals (SRM) and Frequency Domain Artifacts (2D-FFT).
