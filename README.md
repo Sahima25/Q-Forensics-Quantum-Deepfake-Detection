@@ -34,3 +34,23 @@ A 4-qubit VQC uses CNOT gates to find correlations between artifacts that are in
 
  ### Provenance Audit: 
   Cross-references results with detected AI watermarks or logos for a final "Forensic Veto."
+
+ 
+## 🚀 Getting Started
+
+Follow these instructions to set up and run Q‑Forensics on your own machine.
+
+### 📋 Prerequisites
+
+- Python 3.8 or higher
+- pip (Python package installer)
+- (Optional) A GPU with CUDA support for faster training
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Sahima25/Q-Forensics-Quantum-Deepfake-Detection.git
+   cd Q-Forensics-Quantum-Deepfake-Detection
+
+ 
