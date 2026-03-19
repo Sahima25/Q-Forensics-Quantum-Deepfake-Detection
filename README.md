@@ -48,11 +48,12 @@ Follow these instructions to set up and run Q‑Forensics on your own machine.
 
 ### Installation
 
-1. Clone the repository:
+### 1. Clone the repository:
    ```bash
    git clone https://github.com/Sahima25/Q-Forensics-Quantum-Deepfake-Detection.git
    cd Q-Forensics-Quantum-Deepfake-Detection
-2.Install the required packages:
+
+## 2.Install the required packages:
 
 bash
 pip install -r requirements.txt
@@ -65,10 +66,9 @@ pennylane – for quantum circuit simulation
 streamlit – for the web interface
 
 opencv-python, numpy, tqdm – for image processing and utilities
-Data Preparation
+## Data Preparation
 Your dataset should be organised in the following structure:
 
-text
 data/
 ├── real/
 │   ├── image1.jpg
@@ -80,7 +80,7 @@ data/
     └── ...
 Place your real and fake face images in the corresponding folders. For best results, use a balanced dataset (e.g., 5000 real + 5000 fake).
 
- Precomputation of Features
+## Precomputation of Features
 Before training, you need to extract the spatial (MobileNetV3) and frequency (FFT) features for all images. Run these two scripts in order:
 
 MobileNetV3 features from SRM noise maps
@@ -92,7 +92,7 @@ python precompute_mobilevit.py --data_root data --output_dir mobilevit_features 
 
 The script also saves a paths.csv file that maps base names to original image paths.
 
-Frequency features (FFT)
+## Frequency features (FFT)
 This script reads the mapping from the previous step and extracts low‑ and high‑frequency FFT means for the same images.
 
 bash
@@ -103,7 +103,7 @@ mobilevit_features/ – contains .npy files (576‑dim each)
 
 precomputed_features_subset/ – contains .pt files (2‑dim each)
 
- Training the Hybrid Model
+## Training the Hybrid Model
 Once the features are precomputed, you can train the hybrid quantum‑classical model:
 
 bash
@@ -112,7 +112,7 @@ Training takes about 3–4 hours on a CPU (faster on GPU).
 
 The model weights will be saved in weights/hybrid_concat_weights.pth.
 
- Running the Streamlit App
+## Running the Streamlit App
 After training, you can test the model with a user‑friendly web interface:
 
 bash
