@@ -20,7 +20,7 @@ Beyond detection, it verifies digital watermarks and AI company logos to establi
 Decomposes images into "checkerboard artifacts" (Frequency) and pixel-level noise residuals (Spatial).
 
 ### Quantum Embedding: 
-Maps these features into a 16-dimensional Hilbert Space using Angle Embedding.
+Maps these features into a 8-dimensional Hilbert Space using Angle Embedding.
 
 ### Entanglement Analysis: 
 A 4-qubit VQC uses CNOT gates to find correlations between artifacts that are invisible to classical detectors.
