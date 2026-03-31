@@ -20,4 +20,3 @@ for i in range(1, len(L)):
         S.append(L[i])
 
 print(S)
-S
