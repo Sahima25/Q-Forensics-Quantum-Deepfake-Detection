@@ -1,78 +1,76 @@
 import os
-import cv2
+import glob
 import numpy as np
 import torch
 from tqdm import tqdm
-import csv
-import argparse
+from feature_extractor import get_model, extract_all_features
 
-# -------------------------------
-# Argument parsing
-# -------------------------------
-parser = argparse.ArgumentParser(description='Precompute frequency features (FFT) for images listed in a mapping CSV.')
-parser.add_argument('--mapping_csv', type=str, default='mobilevit_features/paths.csv',
-                    help='Path to the CSV file containing base_name and original_path.')
-parser.add_argument('--output_dir', type=str, default='precomputed_features_subset',
-                    help='Directory where frequency .pt files will be saved.')
-parser.add_argument('--img_size', type=int, default=256,
-                    help='Image size for resizing.')
-args = parser.parse_args()
+# --- CONFIGURATION ---
+# Use 'r' before the string to handle Windows backslashes correctly
+DATA_ROOT = r"D:\deepfake\data" 
+OUTPUT_DIR = "precomputed_features"
+LIMIT_PER_CLASS = 5000  # Balanced: 5k Real, 5k Fake
 
-mapping_csv = args.mapping_csv
-output_dir = args.output_dir
-img_size = args.img_size
+def run_precompute():
+    # 1. Setup Folders
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
+    
+    if not os.path.exists(DATA_ROOT):
+        print(f"❌ DATA_ROOT NOT FOUND: {DATA_ROOT}")
+        print("Please check if your images are in D:\\deepfake\\data")
+        return
 
-os.makedirs(output_dir, exist_ok=True)
+    # 2. Initialize the Feature Extractor (MobileNetV3)
+    print("⏳ Loading MobileNetV3 Backbone...")
+    model = get_model()
+    
+    # 3. Find Images using Recursive Glob
+    # Real images usually sit directly in /real/
+    real_pattern = os.path.join(DATA_ROOT, "real", "**", "*.png")
+    # Fake images are in /fake/Deepfakes/, /fake/Face2Face/, etc.
+    fake_pattern = os.path.join(DATA_ROOT, "fake", "**", "*.png")
 
-# -------------------------------
-# Load mapping
-# -------------------------------
-base_to_path = {}
-with open(mapping_csv, 'r', encoding='utf-8') as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        base_to_path[row['base_name']] = row['original_path']
+    print("🔍 Searching for images...")
+    real_paths = glob.glob(real_pattern, recursive=True)
+    fake_paths = glob.glob(fake_pattern, recursive=True)
 
-print(f"Loaded {len(base_to_path)} image paths from {mapping_csv}")
+    # Balance the dataset (FaceForensics++ is heavily imbalanced)
+    real_selected = real_paths[:LIMIT_PER_CLASS]
+    fake_selected = fake_paths[:LIMIT_PER_CLASS]
 
-# -------------------------------
-# Frequency feature extraction
-# -------------------------------
-def extract_frequency_features(img_gray):
-    """Return low and high frequency means as a 2‑element tensor."""
-    img = cv2.resize(img_gray, (img_size, img_size))
-    f = np.fft.fft2(img)
-    fshift = np.fft.fftshift(f)
-    mag = np.abs(fshift) + 1e-8
-    log_mag = np.log(mag)
+    tasks = [(p, 0) for p in real_selected] + [(p, 1) for p in fake_selected]
+    
+    if len(tasks) == 0:
+        print(f"❌ No images found!")
+        print(f"Checked Real: {real_pattern}")
+        print(f"Checked Fake: {fake_pattern}")
+        return
 
-    center = img_size // 2
-    Y, X = np.ogrid[:img_size, :img_size]
-    dist = np.sqrt((X - center)**2 + (Y - center)**2)
+    print(f"✅ Found {len(real_selected)} Real and {len(fake_selected)} Fake images.")
+    print(f"🚀 Starting Extraction to {OUTPUT_DIR}...")
 
-    low_region = dist < img_size/4
-    high_region = dist > img_size/3
-
-    f_low = np.mean(log_mag[low_region])
-    f_high = np.mean(log_mag[high_region])
-
-    return torch.tensor([f_low, f_high], dtype=torch.float32)
-
-# -------------------------------
-# Process each image
-# -------------------------------
-success = 0
-for base_name, img_path in tqdm(base_to_path.items(), desc="Extracting frequency features"):
-    try:
-        img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            print(f"Warning: cannot read {img_path}")
+    # 4. Extraction Loop
+    success_count = 0
+    for img_path, label in tqdm(tasks):
+        try:
+            # Extract 578-dim vector (Spatial + Frequency)
+            feat = extract_all_features(img_path, model)
+            
+            if feat is not None:
+                # Create a unique filename: folder_filename_label.npy
+                parent_dir = os.path.basename(os.path.dirname(img_path))
+                file_name = os.path.basename(img_path).split('.')[0]
+                save_path = os.path.join(OUTPUT_DIR, f"{parent_dir}_{file_name}_{label}.npy")
+                
+                np.save(save_path, feat)
+                success_count += 1
+        except Exception as e:
+            # Skip corrupted images
             continue
-        freq_feat = extract_frequency_features(img)
-        out_path = os.path.join(output_dir, base_name + '.pt')
-        torch.save(freq_feat, out_path)
-        success += 1
-    except Exception as e:
-        print(f"Error processing {img_path}: {e}")
 
-print(f"Successfully saved {success} frequency feature files to {output_dir}")
+    print(f"\n✨ SUCCESS: {success_count} feature vectors saved.")
+    print(f"Next Step: Run 'python train.py' to start the Quantum GAN training.")
+
+if __name__ == "__main__":
+    run_precompute()
